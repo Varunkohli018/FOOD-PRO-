@@ -1,60 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PDF Toolkit — All-in-One</title>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<style>
+  :root{
+    --accent-1:#2b6ef6; --accent-2:#7b61ff; --muted:#64748b; --text:#0f172a;
+    --bg-start:#f6f8ff; --bg-end:#eef6ff; --radius:14px;
+    --card-shadow: 0 10px 30px rgba(16,24,40,0.06);
+    --btn-shadow: 0 12px 30px rgba(37,99,235,0.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,Roboto,Arial,sans-serif;background:linear-gradient(180deg,var(--bg-start),var(--bg-end));color:var(--text);-webkit-font-smoothing:antialiased}
+  /* Header */
+  .top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;position:sticky;top:0;z-index:50}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-weight:700}
+  .title{font-weight:700}
+  .subtitle{font-size:.85rem;opacity:.95}
+  /* container / pages */
+  .container{max-width:1100px;margin:20px auto;padding:0 18px 120px;min-height:calc(100vh - 120px)}
+  .page{display:none}
+  .page.active{display:block;animation:fadeIn .25s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px}
+  .tool{background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);border-radius:var(--radius);padding:22px;text-align:center;cursor:pointer;box-shadow:var(--card-shadow);transition:transform .22s}
+  .tool:hover{transform:translateY(-6px)}
+  .icon{width:62px;height:62px;border-radius:12px;display:inline-grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent-1),var(--accent-2));font-weight:700;margin:0 auto 8px}
+  /* large full-screen text area */
+  textarea.full{width:100%;height:78vh;resize:none;border-radius:12px;padding:16px;border:1px solid rgba(0,0,0,0.06);font-size:1rem}
+  input[type=file]{display:inline-block}
+  .action{display:inline-block;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:none;padding:12px 18px;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:var(--btn-shadow)}
+  .action:active{transform:translateY(2px)}
+  /* editor */
+  .editor-area{flex:1;display:flex;justify-content:center;align-items:center;position:relative;overflow:auto;background:#e9f2ff;border-radius:12px;padding:12px;min-height:60vh}
+  canvas#pdfCanvas{border-radius:6px;box-shadow:0 8px 30px rgba(16,24,40,0.06);max-width:100%;height:auto}
+  .floating-text{position:absolute;border:2px dashed rgba(0,0,0,0.12);background:rgba(255,255,255,0.95);border-radius:6px;padding:6px;min-width:80px;z-index:1000}
+  .file-helpers{display:flex;gap:8px;align-items:center}
+  /* file list */
+  ul#fileList{list-style:none;padding:0;margin:12px auto;max-width:700px}
+  ul#fileList li{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#f8fbff);margin-bottom:10px;box-shadow:var(--card-shadow)}
+  ul#fileList .controls{display:flex;gap:8px}
+  /* responsive */
+  @media(max-width:520px){.icon{width:54px;height:54px}.top-bar{padding:12px}}
+</style>
+</head>
 <body>
-<div class="head">
-<h1>FoodFarm</h1>    
-<form>
-<input type="text" placeholder="Search">
-<input type="submit" value="S">
-      <div class="dropdown">
-        <button class="menu-icon">☰</button>
-        <div class="dropdown-content">
-          <a href="#" onclick="navigateTo('myFiles')">My Order</a>
-          <a href="#">offers</a>
-          <a href="#">contect us </a>
+  <header class="top-bar">
+    <div class="brand">
+      <div class="logo">PDF</div>
+      <div>
+        <div class="title">PDF Toolkit</div>
+        <div class="subtitle">Create · Merge · Edit · Share</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="showPage('myFiles')" class="action" style="background:rgba(255,255,255,0.12);box-shadow:none">My Files</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HOME -->
+    <section id="home" class="page active">
+      <div style="text-align:center;margin-bottom:14px">
+        <h1 style="color:var(--accent-1);margin:10px 0">Welcome</h1>
+        <div style="color:var(--muted);font-weight:600">Tap a tool — each opens a focused full-screen workspace</div>
+      </div>
+
+      <div class="grid" aria-label="tools">
+        <div class="tool" onclick="showPage('text')">
+          <div class="icon">T</div><h3>Text to PDF</h3><p style="margin:6px 0;color:var(--muted)">Write & export full-page PDFs</p>
+        </div>
+        <div class="tool" onclick="showPage('image')">
+          <div class="icon">🖼️</div><h3>Image to PDF</h3><p style="margin:6px 0;color:var(--muted)">Convert photos to PDF</p>
+        </div>
+        <div class="tool" onclick="showPage('merge')">
+          <div class="icon">📎</div><h3>Merge PDF</h3><p style="margin:6px 0;color:var(--muted)">Combine multiple PDFs</p>
+        </div>
+        <div class="tool" onclick="showPage('edit')">
+          <div class="icon">✏️</div><h3>Edit PDF</h3><p style="margin:6px 0;color:var(--muted)">Open & tap to add/edit text</p>
+        </div>
+        <div class="tool" onclick="showPage('receipt')">
+          <div class="icon">🧾</div><h3>Receipt Maker</h3><p style="margin:6px 0;color:var(--muted)">Quick receipts</p>
+        </div>
+        <div class="tool" onclick="showPage('myFiles')">
+          <div class="icon">📂</div><h3>My Files</h3><p style="margin:6px 0;color:var(--muted)">Open, share or delete</p>
         </div>
       </div>
-</form>
-</div>
+    </section>
 
-<h2>Top Sellers</h2>
-<div style="display: flex;gap:2%;width:100%;margin: 1% 0%;align-items:center;justify-content:center;">
-<div class="sell">
-<img src="data:image/png;base64,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" class="img">
-</div>
-<div class="sell">
-<img src="https://play-lh.googleusercontent.com/ixPkPHkzd8VD0HbmCL1n5PKYi3tWn8hGpRjeP6lutuFWZ6VpXUePGa9ZHcP6f_99bDA=s256-rw" class="img">
-</div>
-<div class="sell">
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRyRhoyOPWE1xjuKzB--mJsN_HOdPVevSxQvw&s" class="img">
-</div>
-<div class="sell"></div>
-<div class="sell"></div>
-<div class="sell"></div>
-</div>
-<div style="display: flex;gap:2%;width:100%;margin: 2% 0%;align-items:center;justify-content:center;">
-<div class="sell"></div>
-<div class="sell"></div>
-<div class="sell"></div>
-<div class="sell"></div>
-<div class="sell"></div>
-<div class="sell"></div>
-</div>
+    <!-- TEXT -->
+    <section id="text" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <button onclick="showPage('home')" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(0,0,0,0.08)">← Back</button>
+        <div style="font-weight:700">Text to PDF</div>
+      </div>
+      <textarea id="textArea" class="full" placeholder="Write full page content here..."></textarea>
+      <div style="margin-top:12px;text-align:center">
+        <button class="action" onclick="createTextPdf()">Create & Save</button>
+      </div>
+    </section>
 
+    <!-- IMAGE -->
+    <section id="image" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <button onclick="showPage('home')" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(0,0,0,0.08)">← Back</button>
+        <div style="font-weight:700">Image to PDF</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+        <input id="imageInput" type="file" accept="image/*" multiple />
+        <div style="color:var(--muted)">Tip: select multiple images for multi-page PDF.</div>
+        <button class="action" onclick="createImagePdf()">Create PDF</button>
+      </div>
+    </section>
 
-<h2>Top Products</h2>
-<div style="display: flex;gap:2%;width:100%;margin: 1% 0%;align-items:center;justify-content:center;">
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-</div>
-<div style="display: flex;gap:2%;width:100%;margin: 2% 0%;align-items:center;justify-content:center;">
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-<div class="sell1"></div>
-    <link rel="stylesheet" href="style.css">
-</div>
+    <!-- MERGE -->
+    <section id="merge" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <button onclick="showPage('home')" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(0,0,0,0.08)">← Back</button>
+        <div style="font-weight:700">Merge PDFs</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+        <input id="mergeInput" type="file" accept="application/pdf" multiple />
+        <button class="action" onclick="mergePdfs()">Merge & Save</button>
+      </div>
+    </section>
+
+    <!-- EDIT -->
+    <section id="edit" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <button onclick="showPage('home')" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(0,0,0,0.08)">← Back</button>
+        <div style="font-weight:700">Edit PDF</div>
+      </div>
+
+      <div class="file-helpers" style="gap:8px;margin-bottom:10px">
+        <input id="editFileInput" type="file" accept="application/pdf" />
+        <button class="action" onclick="openEditFile()">Open</button>
+        <button onclick="enterAddTextMode()" style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:#fff">Add / Edit Text</button>
+        <button class="action" onclick="saveEditedPdf()">Save PDF</button>
+        <div style="margin-left:auto;color:var(--muted)">Tip: Click page to add text. Click a box to edit. Save to embed.</div>
+      </div>
+
+      <div class="editor-area" id="editorArea">
+        <canvas id="pdfCanvas"></canvas>
+      </div>
+    </section>
+
+    <!-- RECEIPT -->
+    <section id="receipt" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <button onclick="showPage('home')" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(0,0,0,0.08)">← Back</button>
+        <div style="font-weight:700">Receipt Maker</div>
+      </div>
+      <form id="receiptForm" style="display:flex;flex-direction:column;gap:10px;max-width:520px;margin:0 auto">
+        <input id="r_date" placeholder="Date (e.g. 2025-10-07)" required>
+        <input id="r_name" placeholder="Customer Name" required>
+        <input id="r_item" placeholder="Item Description" required>
+        <input id="r_qty" type="number" placeholder="Quantity" required>
+        <input id="r_price" type="number" placeholder="Price per item" required>
+        <div style="text-align:center"><button class="action" type="button" onclick="createReceipt()">Create & Save</button></div>
+      </form>
+    </section>
+
+    <!-- MY FILES -->
+    <section id="myFiles" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <button onclick="showPage('home')" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(0,0,0,0.08)">← Back</button>
+        <div style="font-weight:700">My Files</div>
+      </div>
+      <ul id="fileList"></ul>
+    </section>
+  </main>
+
+  <!-- floating bottom quick actions -->
+  <div style="position:fixed;left:0;right:0;bottom:14px;display:flex;justify-content:center;pointer-events:none">
+    <div style="display:flex;gap:12px;pointer-events:auto">
+      <button class="action" onclick="showPage('myFiles')">Open Files</button>
+      <button class="action" onclick="showPage('home')">Home</button>
+    </div>
+  </div>
+
+<script>
+/* --- Navigation --- */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id === 'myFiles') loadMyFiles();
+}
+
+/* --- Text to PDF --- */
+function createTextPdf(){
+  try{
+    const text = document.getElementById('textArea').value || '';
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const lines = doc.splitTextToSize(text || ' ', 180);
+    doc.text(lines, 10, 10);
+    doc.save('text.pdf');
+    saveFile('text.pdf', doc.output('blob'));
+    alert('Saved: text.pdf');
+  }catch(e){ console.error(e); alert('Error creating PDF') }
+}
+
+/* --- Image to PDF --- */
+function createImagePdf(){
+  const input = document.getElementById('imageInput');
+  const files = input.files;
+  if(!files || !files.length) return alert('Select image(s) first');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let i = 0;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 180, maxH = 240;
+      let w = img.width, h = img.height;
+      const ratio = Math.min(maxW/w, maxH/h);
+      w *= ratio; h *= ratio;
+      doc.addImage(img, 'JPEG', (210-w)/2, 10, w, h);
+      i++;
+      if(i < files.length){ doc.addPage(); reader.readAsDataURL(files[i]); }
+      else { doc.save('images.pdf'); saveFile('images.pdf', doc.output('blob')); alert('Saved: images.pdf'); }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(files[0]);
+}
+
+/* --- Merge PDFs --- */
+async function mergePdfs(){
+  try{
+    const input = document.getElementById('mergeInput');
+    if(!input.files.length) return alert('Select PDF files first');
+    const mergedPdf = await PDFLib.PDFDocument.create();
+    for(const f of input.files){
+      const bytes = await f.arrayBuffer();
+      const pdf = await PDFLib.PDFDocument.load(bytes);
+      const copied = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+      copied.forEach(p => mergedPdf.addPage(p));
+    }
+    const mergedBytes = await mergedPdf.save();
+    const blob = new Blob([mergedBytes], {type:'application/pdf'});
+    const name = 'merged.pdf';
+    saveFile(name, blob);
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    alert('Saved: merged.pdf');
+  }catch(e){ console.error(e); alert('Merge failed') }
+}
+
+/* --- Receipt --- */
+function createReceipt(){
+  const name = document.getElementById('r_name').value || '';
+  const item = document.getElementById('r_item').value || '';
+  const qty = Number(document.getElementById('r_qty').value || 0);
+  const price = Number(document.getElementById('r_price').value || 0);
+  const date = document.getElementById('r_date').value || new Date().toLocaleDateString();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(12);
+  doc.text(`Date: ${date}`, 10, 12);
+  doc.text(`Customer: ${name}`, 10, 24);
+  doc.text(`Item: ${item}`, 10, 36);
+  doc.text(`Qty: ${qty}`, 10, 48);
+  doc.text(`Price: ₹${price}`, 10, 60);
+  doc.text(`Total: ₹${qty * price}`, 10, 72);
+  doc.save('receipt.pdf');
+  saveFile('receipt.pdf', doc.output('blob'));
+  alert('Saved: receipt.pdf');
+}
+
+/* --- localStorage save/load --- */
+function saveFile(filename, blob){
+  try{
+    const reader = new FileReader();
+    reader.onload = function(){ localStorage.setItem(filename, reader.result); };
+    reader.readAsDataURL(blob);
+  }catch(e){ console.error('saveFile', e) }
+}
+
+function loadMyFiles(){
+  const list = document.getElementById('fileList');
+  list.innerHTML = '';
+  Object.keys(localStorage).forEach(key=>{
+    if(key.toLowerCase().endsWith('.pdf')){
+      const li = document.createElement('li');
+      li.innerHTML = `<div style="font-weight:700">${key}</div>`;
+      const ctr = document.createElement('div'); ctr.className='controls';
+      const o = document.createElement('button'); o.textContent='Open'; o.className='action'; o.style.padding='8px 10px';
+      o.onclick = ()=> window.open(localStorage.getItem(key));
+      const s = document.createElement('button'); s.textContent='Share'; s.style.padding='8px 10px';
+      s.onclick = ()=> navigator.share?.({title:key,url:localStorage.getItem(key)}) || alert('Share not available');
+      const d = document.createElement('button'); d.textContent='Delete'; d.style.padding='8px 10px';
+      d.onclick = ()=> { if(confirm('Delete '+key+'?')){ localStorage.removeItem(key); loadMyFiles(); } };
+      ctr.append(o,s,d);
+      li.appendChild(ctr);
+      list.appendChild(li);
+    }
+  });
+}
+
+/* --- EDITOR (pdf.js render + pdf-lib save) --- */
+// pdf.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+let pdfBytes = null;           // original bytes (ArrayBuffer)
+let pdfJsDoc = null;           // pdf.js doc (for rendering)
+let pdfLibDoc = null;          // pdf-lib doc (for writing)
+let renderedPage = null;       // current pdf.js page
+let canvas = document.getElementById('pdfCanvas');
+let ctx = canvas.getContext('2d');
+let editorArea = document.getElementById('editorArea');
+let scale = 1.3;               // rendering scale
+let textBoxes = [];            // {x,y,w,h,text}
+let activeFloating = null;
+
+async function openEditFile(){
+  const input = document.getElementById('editFileInput');
+  if(!input.files.length) return alert('Choose a PDF first');
+  const file = input.files[0];
+  pdfBytes = await file.arrayBuffer();
+  // render first page using pdf.js
+  const loadingTask = pdfjsLib.getDocument({data: pdfBytes});
+  pdfJsDoc = await loadingTask.promise;
+  const page = await pdfJsDoc.getPage(1);
+  renderedPage = page;
+  const viewport = page.getViewport({scale});
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  canvas.style.width = viewport.width + 'px';
+  canvas.style.height = viewport.height + 'px';
+  const renderContext = { canvasContext: ctx, viewport };
+  await page.render(renderContext).promise;
+  // prepare pdf-lib document for writing
+  pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
+  // clear existing boxes
+  textBoxes = [];
+  removeFloating();
+}
+
+function enterAddTextMode(){
+  if(!pdfJsDoc) return alert('Open a PDF first');
+  editorArea.style.cursor = 'text';
+  alert('Add text mode: click anywhere on the page to add or edit a box.');
+}
+
+// click to add or edit text box
+editorArea.addEventListener('click', function(e){
+  // only handle clicks inside the canvas region
+  if(!pdfJsDoc) return;
+  // compute relative coordinates to canvas's client rect
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+  // check if clicking inside canvas bounds
+  if(clickX < 0 || clickY < 0 || clickX > rect.width || clickY > rect.height) return;
+  // check if clicked existing box
+  const found = textBoxes.find(tb => clickX >= tb.x && clickX <= tb.x + tb.w && clickY >= tb.y && clickY <= tb.y + tb.h);
+  if(found){ openFloating(found); return; }
+  // add new box
+  const box = { x: Math.max(4, Math.round(clickX)), y: Math.max(4, Math.round(clickY)), w: 180, h: 40, text: 'Tap to edit' };
+  textBoxes.push(box);
+  openFloating(box);
+});
+
+// show floating textarea above canvas for a box
+function openFloating(box){
+  removeFloating();
+  const rect = canvas.getBoundingClientRect();
+  const el = document.createElement('textarea');
+  el.className = 'floating-text';
+  el.value = box.text || '';
+  // position relative to page
+  el.style.left = (rect.left + box.x) + 'px';
+  el.style.top = (rect.top + box.y) + 'px';
+  el.style.width = box.w + 'px';
+  el.style.height = box.h + 'px';
+  el.style.fontSize = '14px';
+  document.body.appendChild(el);
+  el.focus();
+  activeFloating = { el, box };
+  // on blur, save
+  el.addEventListener('blur', () => {
+    box.text = el.value;
+    removeFloating();
+    renderPreviewText();
+  });
+  // Enter => finish editing
+  el.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); el.blur(); } if(ev.key==='Escape'){ removeFloating(); } });
+}
+
+// remove floating element
+function removeFloating(){
+  if(activeFloating && activeFloating.el){
+    try{ document.body.removeChild(activeFloating.el); }catch(e){}
+    activeFloating = null;
+  }
+}
+
+// draw preview text boxes on canvas
+function renderPreviewText(){
+  if(!renderedPage) return;
+  // re-render page
+  renderedPage.render({ canvasContext: ctx, viewport: renderedPage.getViewport({scale}) }).promise.then(()=>{
+    // small timeout to ensure render complete
+    setTimeout(()=>{
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.9)';
+      textBoxes.forEach(tb=>{
+        // draw simple text preview
+        ctx.fillText(tb.text || '', tb.x + 4, tb.y + 16);
+      });
+    }, 80);
+  });
+}
+
+/* Save edits: embed textBoxes into the first page using pdf-lib */
+async function saveEditedPdf(){
+  try{
+    if(!pdfLibDoc) return alert('Open a PDF first');
+    const pages = pdfLibDoc.getPages();
+    const p = pages[0];
+    const { width: pdfWidth, height: pdfHeight } = p.getSize();
+    // canvas pixel size vs pdf points conversion
+    const canvasPxWidth = canvas.width;
+    const canvasPxHeight = canvas.height;
+    const xRatio = pdfWidth / canvasPxWidth;
+    const yRatio = pdfHeight / canvasPxHeight;
+     // add text on page
+    textBoxes.forEach(tb=>{
+    const pdfx = tb.x * xRatio;
+    // invert y
+    const pdfy - pdfHeight - (tb.y* yRatio) - 12; // adjust
+    p.drawText(tb.text II, {x: pdfX, y: pdfy, size: 12, color: 9
+    PDFLib.rgb(0,0,0) });
+    });
+    const newBytes = await pdfLibDoc.save();
+    const blob = new Blob ([newBytes], {type: application/pdf});
+    const name = 'edited.pdf";   
+          // download
+    const link document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    // save to localStorage
+    savofile (name, blob);
+    alert('Saved: + name);
+    }catch(e){ console.error(e); alert('Save failed')}
+    }
+    /* Initialize / helpers */
+    window.addEventListener('load', () => {
+    showPage home');
+    // resize handling so canvas remains contered
+    window.addEventListener('resize', () => { if(renderedPage)
+    render PreviewText(); });
+    });
+    </script>
+    </body>
+    </html>
